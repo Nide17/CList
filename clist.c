@@ -3,7 +3,7 @@
  *
  * Linked list implementation for ISSE Assignment 5
  *
- * Author: <YOUR NAME HERE!>
+ * Author: Niyomwungeri Parmenide ISHIMWE<parmenin@andrew.cmu.edu>
  */
 
 #include <stdio.h>
@@ -204,13 +204,13 @@ bool CL_insert(CList list, CListElementType element, int pos)
 {
   assert(list);
 
-  // bounds check - if pos is negative or out of bounds, it's an error
-  if (pos < -list->length - 1 || pos > list->length)
-    return false;
-
   // convert negative pos to positive by counting from the end of the list
   if (pos < 0)
     pos = list->length + pos + 1;
+
+  // bounds check - if pos is negative or out of bounds, it's an error
+  if (pos < 0 || pos > list->length)
+    return false;
 
   // If pos is 0, just push the element onto the list
   if (pos == 0)
@@ -221,7 +221,7 @@ bool CL_insert(CList list, CListElementType element, int pos)
 
   struct _cl_node *this_node = list->head;
 
-  //
+  // traverse the list until we find the node at position pos-1
   while (pos > 1 && this_node != NULL)
   {
     this_node = this_node->next;
@@ -270,24 +270,27 @@ CListElementType CL_remove(CList list, int pos)
   if (this_node == NULL)
     return INVALID_RETURN;
 
-  // Otherwise, this_node points to the this_node at position pos-1
+  // if this_node->next is NULL, we are at the end of the list
   struct _cl_node *rm_node = this_node->next;
   if (rm_node == NULL)
     return INVALID_RETURN;
 
-  // remove the node at position pos-1 - point current node to the node after the one we are removing
-  this_node->next = rm_node->next;
+  else
+  {
+    // remove the node at position pos-1 - point current node to the node after the one we are removing
+    this_node->next = rm_node->next;
 
-  // Save the element to return
-  CListElementType rm_element = rm_node->element;
+    // Save the element to return
+    CListElementType rm_element = rm_node->element;
 
-  // Decrement the length of the list
-  list->length--;
+    // Decrement the length of the list
+    list->length--;
 
-  // deallocate the node we are removing
-  free(rm_node);
+    // deallocate the node we are removing
+    free(rm_node);
 
-  return rm_element;
+    return rm_element;
+  }
 }
 
 // Documented in .h file
@@ -383,10 +386,12 @@ void CL_reverse(CList list)
   // reverse if list is not empty
   if (list->head != NULL)
   {
+    // keep track of previous, current and next nodes
     struct _cl_node *prev_node = NULL;
     struct _cl_node *this_node = list->head;
     struct _cl_node *next_node = NULL;
 
+    // traverse the list, reversing the next pointers of each node
     while (this_node != NULL)
     {
       next_node = this_node->next;
