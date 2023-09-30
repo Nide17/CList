@@ -410,7 +410,10 @@ void CL_foreach(CList list, CL_foreach_callback callback, void *cb_data)
 {
   assert(list);
 
-  // traverse the list, calling the callback function for each element
+  // traverse the list, calling the callback function for each element if it is not NULL
+  if (callback == NULL || list->head == NULL || cb_data == NULL)
+    return;
+
   int position = 0;
   for (struct _cl_node *this_node = list->head; this_node != NULL; this_node = this_node->next)
   {
