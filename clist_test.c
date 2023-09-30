@@ -501,10 +501,10 @@ int test_cl_foreach()
   CL_foreach(list, _CL_to_uppercase, (void *)(intptr_t)CL_length(list));
 
   // MORE TEST CASES INCLUDING CORNER CASES
-// Null callback function pointer: What happens if the callback function pointer is null?
-CL_foreach(list, NULL, (void *)(intptr_t)CL_length(list));
-// Null caller data pointer: What happens if the caller data pointer is null?
-
+  // if the callback function pointer is null
+  CL_foreach(list, NULL, (void *)(intptr_t)CL_length(list));
+  // if the caller data pointer is null
+  CL_foreach(list, _CL_to_uppercase, NULL);
 
   CL_free(list);
   return 1;
