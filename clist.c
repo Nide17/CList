@@ -274,6 +274,7 @@ CListElementType CL_remove(CList list, int pos)
   struct _cl_node *rm_node = this_node->next;
   if (rm_node == NULL)
     return INVALID_RETURN;
+    
 
   else
   {
@@ -388,10 +389,10 @@ void CL_reverse(CList list)
   {
     // keep track of previous, current and next nodes
     struct _cl_node *prev_node = NULL;
-    struct _cl_node *this_node = list->head;
     struct _cl_node *next_node = NULL;
+    struct _cl_node *this_node = list->head;
 
-    // traverse the list, reversing the next pointers of each node
+    // traverse the list, reversing the direction of each next pointers of each node
     while (this_node != NULL)
     {
       next_node = this_node->next;
@@ -400,7 +401,7 @@ void CL_reverse(CList list)
       this_node = next_node;
     }
 
-    // update head of list
+    // update head of list to point to the last node
     list->head = prev_node;
   }
 }
@@ -410,10 +411,11 @@ void CL_foreach(CList list, CL_foreach_callback callback, void *cb_data)
 {
   assert(list);
 
-  // traverse the list, calling the callback function for each element if it is not NULL
+  // if list is empty, or callback is NULL, or cb_data is NULL, do nothing
   if (callback == NULL || list->head == NULL || cb_data == NULL)
     return;
 
+  // traverse the list, calling the callback function for each element if it is not NULL
   int position = 0;
   for (struct _cl_node *this_node = list->head; this_node != NULL; this_node = this_node->next)
   {

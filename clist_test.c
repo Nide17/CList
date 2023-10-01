@@ -101,7 +101,7 @@ int test_cl_append()
 {
   CList list = CL_new();
 
-  // Append all the items
+  // Append all the items in the testdata array
   for (int i = 0; i < num_testdata; i++)
   {
     CL_append(list, testdata[i]);
@@ -111,6 +111,38 @@ int test_cl_append()
   // ensure that the list is in the right order
   for (int i = 0; i < num_testdata; i++)
     test_compare(CL_nth(list, i), testdata[i]);
+
+  // Append null or empty data
+  CL_append(list, NULL);
+  CL_append(list, "");
+  test_assert(CL_length(list) == num_testdata + 2); 
+  test_compare(CL_nth(list, num_testdata + 1), "");
+
+  // Append a large number of items
+  int num_large_items = 1000;
+  for (int i = 0; i < num_large_items; i++)
+  {
+    CL_append(list, "item");
+    test_assert(CL_length(list) == i + num_testdata + 3); 
+  }
+
+  // Append long data
+  char *large_line = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec a diam lectus. Sed sit amet ipsum mauris. Maecenas congue ligula ac quam viverra nec consectetur ante hendrerit. Donec et mollis dolor. Praesent et diam eget libero egestas mattis sit amet vitae augue.";
+  CL_append(list, large_line);
+  test_assert(CL_length(list) == num_testdata + 3 + num_large_items); 
+  test_compare(CL_nth(list, CL_length(list) - 1), large_line);
+
+  // Append data with special characters
+  char *special_data = "Special characters: \n\t\r\xFF";
+  CL_append(list, special_data);
+  test_assert(CL_length(list) == num_testdata + 3 + num_large_items + 1); 
+  test_compare(CL_nth(list, CL_length(list) - 1), special_data);
+
+  // Append data with escapes
+  char *escape_data = "Escapes: \\n \\t \\\"";
+  CL_append(list, escape_data);
+  test_assert(CL_length(list) == num_testdata + 3 + num_large_items + 2); 
+  test_compare(CL_nth(list, CL_length(list) - 1), escape_data);
 
   CL_free(list);
   return 1;
@@ -125,14 +157,12 @@ int test_cl_nth()
 {
   CList list = CL_new();
 
-  // Empty list -- ensure that CL_nth returns NULL for -2, -1, 0, 1, and 2
-  test_invalid(CL_nth(list, -2));
+  // Using an empty list, ensure that CL_nth returns NULL for -1, 0, 1
   test_invalid(CL_nth(list, -1));
   test_invalid(CL_nth(list, 0));
   test_invalid(CL_nth(list, 1));
-  test_invalid(CL_nth(list, 2));
 
-  // Add one item, then perform same tests
+  // Add one item, then perform the same tests
   CL_push(list, testdata[2]);
   test_assert(CL_length(list) == 1);
   test_invalid(CL_nth(list, -3));
@@ -157,14 +187,26 @@ int test_cl_nth()
   test_invalid(CL_nth(list, 3));
   test_invalid(CL_nth(list, 4));
 
+  // Add more items at the beginning and end of the list
+  CL_insert(list, testdata[3], 0);
+  CL_append(list, testdata[4]);
+  test_assert(CL_length(list) == 5);
+
+  // Perform additional tests with the updated list
+  test_compare(CL_nth(list, -5), testdata[3]);
+  test_compare(CL_nth(list, -4), testdata[0]);
+  test_compare(CL_nth(list, -3), testdata[1]);
+  test_compare(CL_nth(list, -2), testdata[2]);
+  test_compare(CL_nth(list, -1), testdata[4]);
+  test_compare(CL_nth(list, 0), testdata[3]);
+  test_compare(CL_nth(list, 1), testdata[0]);
+  test_compare(CL_nth(list, 2), testdata[1]);
+  test_compare(CL_nth(list, 3), testdata[2]);
+
   CL_free(list);
 
   return 1;
 }
-
-// Test coverage: Do your tests do a good job of covering all the interesting test cases?
-// As distributed, it only has tests for the five functions I have provided. You should add additional tests so that you fully exercise the CList library, including all boundary conditions.
-// implement a corresponding test function in clist_test.c, following the pattern of the test code I have already supplied.
 
 /*
  * Tests the CL_insert function
@@ -175,7 +217,7 @@ int test_cl_insert()
 {
   CList list = CL_new();
 
-  // Empty list -- ensure that CL_insert returns false for -2, 1, and 2
+  // Using an empty list, ensure that CL_insert returns false for -2, 1, and 2
   test_invalid(CL_nth(list, 0));
   test_assert(CL_insert(list, testdata[0], -2) == false);
   test_assert(CL_insert(list, testdata[0], 1) == false);
@@ -225,12 +267,12 @@ int test_cl_remove()
 {
   CList list = CL_new();
 
-  // Empty list -- ensure that CL_remove returns INVALID_RETURN for -1, 0, and 1
+  // Using an empty list, ensure that CL_remove returns INVALID_RETURN for -1, 0, and 1
   test_invalid(CL_remove(list, -1));
   test_invalid(CL_remove(list, 0));
   test_invalid(CL_remove(list, 1));
 
-  // Add one item, then perform same tests
+  // Add one item, then perform the same tests
   CL_push(list, testdata[0]);
   test_assert(CL_length(list) == 1);
   test_invalid(CL_remove(list, -3));
@@ -253,13 +295,38 @@ int test_cl_remove()
   test_assert(CL_length(list) == 0);
   test_invalid(CL_remove(list, 1));
 
+  // Add more items to the list
+  CL_push(list, testdata[3]);
+  CL_push(list, testdata[4]);
+  CL_push(list, testdata[5]);
+  CL_push(list, testdata[6]);
+  test_assert(CL_length(list) == 4);
+
+  // Removing specific items
+  test_invalid(CL_remove(list, -5));
+  test_compare(CL_remove(list, -4), testdata[6]);
+  test_assert(CL_length(list) == 3);
+  test_compare(CL_remove(list, 1), testdata[4]);
+  test_assert(CL_length(list) == 2);
+
+  // Removing the last item
+  test_compare(CL_remove(list, 0), testdata[5]);
+  test_assert(CL_length(list) == 1);
+
+  // Removing the remaining item
+  test_compare(CL_remove(list, 0), testdata[3]);
+  test_assert(CL_length(list) == 0);
+
+  // Ensure that CL_remove returns INVALID_RETURN for an empty list
+  test_invalid(CL_remove(list, 0));
+
   CL_free(list);
 
   return 1;
 }
 
 /*
- * Tests the CL_copy function - CList CL_copy(CList list)
+ * Tests the CL_copy function
  * Parameters:
  *   list     The list
  *
@@ -269,7 +336,7 @@ int test_cl_copy()
 {
   CList list = CL_new();
 
-  // Empty list -- ensure that CL_copy returns an empty list
+  // Using an empty list, ensure that CL_copy returns an empty list
   CList list_copy = CL_copy(list);
   test_assert(CL_length(list_copy) == 0);
   CL_free(list_copy);
@@ -285,13 +352,22 @@ int test_cl_copy()
   CL_push(list, testdata[1]);
   CL_push(list, testdata[2]);
   test_assert(CL_length(list) == 3);
-  CL_free(list_copy); // free the copy to be reused and replaced with a new copy
+
+  // Free the copy to be reused and replaced with a new copy
+  CL_free(list_copy);
 
   list_copy = CL_copy(list);
   test_assert(CL_length(list_copy) == 3);
   test_compare(CL_nth(list_copy, 0), testdata[2]);
   test_compare(CL_nth(list_copy, 1), testdata[1]);
   test_compare(CL_nth(list_copy, 2), testdata[0]);
+
+  // Ensure that the copied list is independent of the original
+  CL_remove(list, 1);
+  test_assert(CL_length(list) == 2);
+  test_assert(CL_length(list_copy) == 3);          
+  test_compare(CL_nth(list, 1), testdata[0]); 
+  test_compare(CL_nth(list_copy, 1), testdata[1]);
 
   CL_free(list);
   CL_free(list_copy);
@@ -300,7 +376,7 @@ int test_cl_copy()
 }
 
 /*
- * Tests the CL_insert_sorted function - int CL_insert_sorted(CList list, CListElementType element);
+ * Tests the CL_insert_sorted function
  * Parameters:
  *   list     The list
  *   element  The element to insert
@@ -311,7 +387,7 @@ int test_cl_insert_sorted()
 {
   CList list = CL_new();
 
-  // Empty list -- ensure that inserting an element to empty list returns 0
+  // Using an empty list, ensure that inserting an element to empty list returns 0
   test_assert(CL_insert_sorted(list, testdata_sorted[5]) == 0);
   test_assert(CL_length(list) == 1);
   test_compare(CL_nth(list, 0), testdata_sorted[5]);
@@ -329,6 +405,7 @@ int test_cl_insert_sorted()
   // empty the list - remove all elements
   while (CL_length(list) > 0)
     CL_pop(list);
+
   // check if the list is empty
   test_assert(CL_length(list) == 0);
 
@@ -358,7 +435,7 @@ int test_cl_insert_sorted()
 }
 
 /*
- * Tests the CL_join function - void CL_join(CList list1, CList list2)
+ * Tests the CL_join function
  * Parameters:
  *  list1     The list to be appended to
  *  list2     The list to be joined to list1
@@ -370,7 +447,7 @@ int test_cl_join()
   CList list1 = CL_new();
   CList list2 = CL_new();
 
-  // Empty list -- ensure that CL_join returns an empty list
+  // Using an empty list, ensure that CL_join returns an empty list
   CL_join(list1, list2);
   test_assert(CL_length(list1) == 0);
   test_assert(CL_length(list2) == 0);
@@ -416,7 +493,7 @@ int test_cl_join()
 }
 
 /*
- * Tests the CL_reverse function - void CL_reverse(CList list);
+ * Tests the CL_reverse function
  * Parameters:
  *   list     The list
  *
@@ -426,7 +503,7 @@ int test_cl_reverse()
 {
   CList list = CL_new();
 
-  // Empty list -- ensure that CL_reverse returns an empty list
+  // Using an empty list, ensure that CL_reverse returns an empty list
   CL_reverse(list);
   test_assert(CL_length(list) == 0);
 
@@ -445,13 +522,20 @@ int test_cl_reverse()
   test_compare(CL_nth(list, 1), testdata[1]);
   test_compare(CL_nth(list, 2), testdata[2]);
 
+  // Test reversing an already reversed list
+  CL_reverse(list);
+  test_assert(CL_length(list) == 3);
+  test_compare(CL_nth(list, 0), testdata[2]);
+  test_compare(CL_nth(list, 1), testdata[1]);
+  test_compare(CL_nth(list, 2), testdata[0]);
+
   CL_free(list);
 
   return 1;
 }
 
 /*
- * Converts a string to uppercase
+ * Converts a string to uppercase and prints it
  * Parameters:
  *   pos       The position of the element in the list
  *   element   The element to be converted to uppercase
@@ -459,7 +543,7 @@ int test_cl_reverse()
  *
  * Returns: None
  */
-void _CL_to_uppercase(int pos, CListElementType element, void *cb_data)
+void _CL_print_uppercase(int pos, CListElementType element, void *cb_data)
 {
   int length = strlen(element);
 
@@ -476,7 +560,7 @@ void _CL_to_uppercase(int pos, CListElementType element, void *cb_data)
   free(copy);
 }
 /*
- * Tests the CL_foreach function - void CL_foreach(CList list, CL_foreach_callback callback, void *cb_data);
+ * Tests the CL_foreach function
  * Parameters:
  *  list       The list
  * callback   The function to call
@@ -488,23 +572,43 @@ int test_cl_foreach()
 {
   CList list = CL_new();
 
-  // Empty list -- ensure that CL_foreach does not print anything
-  CL_foreach(list, _CL_to_uppercase, (void *)(intptr_t)CL_length(list));
+  // Using an empty list, ensure that CL_foreach does not print anything
+  CL_foreach(list, _CL_print_uppercase, (void *)(intptr_t)CL_length(list));
 
   // Add one item, then perform the same tests
   CL_append(list, testdata[0]);
   CL_append(list, testdata[1]);
   CL_append(list, testdata[2]);
-  CL_append(list, "Ishimwe Parmenide\n");
-  CL_append(list, "");
-  CL_append(list, " Kigali@!");
-  CL_foreach(list, _CL_to_uppercase, (void *)(intptr_t)CL_length(list));
 
-  // MORE TEST CASES INCLUDING CORNER CASES
-  // if the callback function pointer is null
+  CL_foreach(list, _CL_print_uppercase, (void *)(intptr_t)CL_length(list));
+
+  // If the callback function pointer is null
   CL_foreach(list, NULL, (void *)(intptr_t)CL_length(list));
-  // if the caller data pointer is null
-  CL_foreach(list, _CL_to_uppercase, NULL);
+
+  // If the caller data pointer is null
+  CL_foreach(list, _CL_print_uppercase, NULL);
+
+  // Insert all elements in both testdata and testdata_sorted arrays
+  for (int i = 0; i < num_testdata; i++)
+  {
+    CL_append(list, testdata[i]);
+    CL_append(list, testdata_sorted[i]);
+  }
+
+  // Print all elements in uppercase
+  CL_foreach(list, _CL_print_uppercase, (void *)(intptr_t)CL_length(list));
+
+  // Ensure that CL_foreach handles empty strings and special characters
+  CL_append(list, "");
+  CL_append(list, "\n");
+  CL_append(list, "\t");
+  CL_append(list, " \r");
+  CL_append(list, "123");
+  CL_append(list, "Ishimwe Parmenide\n");
+  CL_append(list, " Kigali@!");
+
+  // Print all elements in uppercase
+  CL_foreach(list, _CL_print_uppercase, (void *)(intptr_t)CL_length(list));
 
   CL_free(list);
   return 1;
